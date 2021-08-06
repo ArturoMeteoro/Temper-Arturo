@@ -96,7 +96,7 @@ void SendData(String ip, String puerto, String method, int base , int numero, in
 {
   HTTPClient http;
   String dataline;
-  //dataline = "http://"+ip+":"+puerto+"/ecosat/test_temper/vistas/refrigeradores.php?method="+method+"&base="+String(base, DEC)+"&numero="+String(numero, DEC)+"&id="+String(id, DEC)+"&idRoom="+String(idRoom, DEC)+"&temperatura="+String(temperatura, DEC)+"&humedad="+String(humedad, DEC)+"&fecha="+fecha;
+
   //dataline = "http://"+ip+":"+puerto+"/test/index.php?method="+method+"&numero="+String(numero, DEC)+"&id="+String(id, DEC)+"&estado="+String(estado, DEC)+"&valor="+String(TEMPERATURA, DEC)+"&fecha="+fecha;
   dataline = "http://" + ip + ":" + puerto + "/test/index.php?method=" + method + "&numero=" + String(numero, DEC) + "&id=" + String(id, DEC) + "&estado=" + String(estado, DEC) + "&valor=" + String(TEMPERATURA, DEC) + "&fecha=" + fecha;
 
