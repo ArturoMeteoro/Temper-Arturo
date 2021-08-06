@@ -1,25 +1,29 @@
 #include <HTTPClient.h>
 #include "WiFi.h"
 
-const int sEst0 = 27;
-const int sEst1 = 17;
-const int led0 = 26;
-const int led1 = 16;
+const float Vcc = 3.3;
+int *estadoInputPin = {27,17};
+int *ledInputPin = {26,16};
+int *sensorInputPin = {33, 34};
+const float K = 2.5;
+float A = 2.229674985e-03, B = 1.211871252e-04, C = 8.713435086e-07;
+float *valuesSensors = {0,0};
+
 const int tiempoEnvioCompletado = 5000;
 const int tiempoSensorCompletado = 1000;
+
+/*CREDENTIALS*/
 const char* ssid = "ECOSATWIFI";
 const char* password = "ECOSAT2010";
 const char* ipServer = "ecosat.com.mx";
 const char* puertoServer = "80";
+
 int tiempoEnvio = 0;
 int tiempoSensor = 0;
 int tiempoDelay = 250;
-int Vo;
-float R1 = 1000;
-float logR2, R2, TEMPERATURASENSOR;
-float c1 = 2.229674985e-03, c2 = 1.211871252e-04, c3 = 8.713435086e-07;
-int Voa;
-float logR2a, R2a, TEMPERATURASENSORa;
+
+
+
 int estadoAnterior[] = {true, true};
 
 /**
@@ -53,10 +57,10 @@ void inicializarWifi() {
 }
 
 void inicializarSensores() {
-  pinMode(sEst0, INPUT);
-  pinMode(sEst1, INPUT);
-  pinMode(led0, OUTPUT);
-  pinMode(led1, OUTPUT);
+  pinMode(estadoInputPin[0], INPUT);
+  pinMode(estadoInputPin[1], INPUT);
+  pinMode(ledInputPin[0], OUTPUT);
+  pinMode(ledInputPin[1], OUTPUT);
 }
 
 
@@ -66,64 +70,30 @@ void setup() {
   tiempoEnvio = 0;
   tiempoSensor = 0;
 
-
   inicializarWifi();
   inicializarSensores();
 }
 
 void sensortermistor()
 {
-  Vo = analogRead(33);
-  R2 = R1 * (1023.0 / ((float)Vo - 1.0));
-  logR2 = log(R2);
-  TEMPERATURASENSOR = (1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2));
-  TEMPERATURASENSOR = TEMPERATURASENSOR - 273.15;
-  Serial.print("TemperaturaSENSOR: ");
-  Serial.print(TEMPERATURASENSOR);
-  Serial.println(" C");
+  for(int i = 0; i < 2; i++){
+    float raw = analogRead(sensorInputPin[i]);
+    float V = raw / 4095 * Vcc;
 
-  Voa = analogRead(34);
-  R2a = R1 * (1023.0 / ((float)Voa - 1.0));
-  logR2a = log(R2a);
-  TEMPERATURASENSORa = (1.0 / (c1 + c2 * logR2a + c3 * logR2a * logR2a * logR2a));
-  TEMPERATURASENSORa = TEMPERATURASENSORa - 273.15;
-  Serial.print("TemperaturaSENSOR 2: ");
-  Serial.print(TEMPERATURASENSORa);
-  Serial.println(" C");
-}
+    float R = (R1 * V) / (Vcc - V);
 
-void SendData(String ip, String puerto, String method, int base , int numero, int id, int estado, float TEMPERATURA, String fecha)
-{
-  HTTPClient http;
-  String dataline;
+    float logR = log(R);
+    float R_th = 1.0 / (A + B * logR + C * logR * logR * logR );
 
-  //dataline = "http://"+ip+":"+puerto+"/test/index.php?method="+method+"&numero="+String(numero, DEC)+"&id="+String(id, DEC)+"&estado="+String(estado, DEC)+"&valor="+String(TEMPERATURA, DEC)+"&fecha="+fecha;
-  dataline = "http://" + ip + ":" + puerto + "/test/index.php?method=" + method + "&numero=" + String(numero, DEC) + "&id=" + String(id, DEC) + "&estado=" + String(estado, DEC) + "&valor=" + String(TEMPERATURA, DEC) + "&fecha=" + fecha;
+    float kelvin = R_th - V*V/(K*R)*1000;
+    valuesSensors[i] = kelvin - 273.15;
+    
+    Serial.print("Temperatura: ");
+    Serial.print(valuesSensors[i]);
+    Serial.println(" C");
 
-  //http://192.168.10.198/test_temper/vistas/test.php?method=estados&numero=1&id=0&estado=1&valor=20.25
-  //http://192.168.10.195/test/insert-sensor.php?id=1&data=0
-
-  Serial.println(dataline);
-  
-  bool httpResult = http.begin(dataline);
-  if (!httpResult)
-  {
-    Serial.println("Error when sending to server: ");
-    Serial.println(dataline);
-  } else {
-    int httpCode = http.GET();
-    if (httpCode > 0)
-    { // Request has been made
-      Serial.printf("HTTP status: %d Message: ", httpCode);
-      String payload = http.getString();
-      Serial.println(payload);
-    }
-    else
-    { // Request could not be made
-      Serial.printf("HTTP request failed. Error: %s\r\n", http.errorToString(httpCode).c_str());
-    }
   }
-  http.end();
+
 }
 
 void SendRoomInfo(String ip, String puerto, int id, String data, String namefile)
@@ -132,9 +102,8 @@ void SendRoomInfo(String ip, String puerto, int id, String data, String namefile
   String dataline;
   dataline = "https://" + ip + "/aplicaciones/temperatura/" + namefile + ".php?&id=" + String(id, DEC) + "&data=" + data;
 
-  //http://192.168.10.195/test/insert-sensor.php?id=1&data=0
+  //http://ecosat.com.mx/aplicaciones/temperatura/insert-sensor.php?id=1&data=0
 
-//  Serial.println(dataline);
 
   bool httpResult = http.begin(dataline);
   if (!httpResult)
