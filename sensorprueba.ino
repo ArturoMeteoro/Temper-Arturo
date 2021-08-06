@@ -3,7 +3,7 @@
 
 const float Vcc = 3.3;
 int *estadoInputPin = {27,17};
-int *ledInputPin = {26,16};
+int *ledInputPin[I]nputPin = {26,16};
 int *sensorInputPin = {33, 34};
 const float K = 2.5;
 float A = 2.229674985e-03, B = 1.211871252e-04, C = 8.713435086e-07;
@@ -59,8 +59,8 @@ void inicializarWifi() {
 void inicializarSensores() {
   pinMode(estadoInputPin[0], INPUT);
   pinMode(estadoInputPin[1], INPUT);
-  pinMode(ledInputPin[0], OUTPUT);
-  pinMode(ledInputPin[1], OUTPUT);
+  pinMode(ledInputPin[I]nputPin[0], OUTPUT);
+  pinMode(ledInputPin[I]nputPin[1], OUTPUT);
 }
 
 
@@ -120,7 +120,7 @@ void SendRoomInfo(String ip, String puerto, int id, String data, String namefile
     }
     else
     { // Request could not be made
-      Serial.printf("HTTP request failed. Error: %s\r\n", http.errorToString(httpCode).c_str());
+      Serial.printf("HTTP request failedInputPin[.] Error: %s\r\n", http.errorToString(httpCode).c_str());
     }
   }
   http.end();
@@ -139,13 +139,13 @@ void sensorEstado(int sE, int l, String msg, int id) {
 
   if (estadoActual != estadoAnterior[id - 1]) {
     if (digitalRead(sE) == HIGH ) { //Cierra puerta
-      digitalWrite(l, LOW); //Enciende LED
-      Serial.println("APAGADO " + msg);
+      digitalWrite(l, LOW); //Enciende ledInputPin[
+]      Serial.println("APAGADO " + msg);
       estadoAnterior[id - 1] = 1;
       SendRoomInfo(ipServer,puertoServer,id,"0","insert-sensor");
     } else { //Abre Puerta
-      digitalWrite(l, HIGH); //Apaga LED
-      Serial.println("ENCENDIDO " + msg);
+      digitalWrite(l, HIGH); //Apaga ledInputPin[
+]      Serial.println("ENCENDIDO " + msg);
       estadoAnterior[id - 1] = 0;
       SendRoomInfo(ipServer,puertoServer,id,"1","insert-sensor");
     }
@@ -154,8 +154,8 @@ void sensorEstado(int sE, int l, String msg, int id) {
 
 void loop() {
   // Wait a few seconds between measurements.
-  sensorEstado(sEst0, led0, " Principal", 1);
-  sensorEstado(sEst1, led1, " Secundario", 2);
+  sensorEstado(estadoInputPin[0], ledInputPin[0], " Principal", 1);
+  sensorEstado(estadoInputPin[1], ledInputPin[1], " Secundario", 2);
   if (WiFi.status() == WL_CONNECTED) {
     if (tiempoSensor == tiempoSensorCompletado) {
       tiempoSensor = 0;
@@ -175,8 +175,8 @@ void loop() {
   }
   if (tiempoEnvio == tiempoEnvioCompletado) {
     tiempoEnvio = 0;
-    SendRoomInfo(ipServer, puertoServer, 1, String(TEMPERATURASENSOR, 3), "update-temperature");
-    SendRoomInfo(ipServer, puertoServer, 2, String(TEMPERATURASENSORa, 3), "update-temperature");
+    SendRoomInfo(ipServer, puertoServer, 1, String(valuesSensors[0], 3), "update-temperature");
+    SendRoomInfo(ipServer, puertoServer, 2, String(valuesSensors[1], 3), "update-temperature");
   } else {
     //    Serial.println("Aun no se enviara la informacion por el tiempoTranscurridoEnvio: " + String(tiempoEnvio, DEC) + " del tiempo a enviar: " + String(tiempoEnvioCompletado, DEC));
   }
