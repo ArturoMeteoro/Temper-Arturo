@@ -13,8 +13,8 @@ const int tiempoEnvioCompletado = 5000;
 const int tiempoSensorCompletado = 1000;
 
 /*CREDENTIALS*/
-const char* ssid = "ECOSATWIFI";
-const char* password = "ECOSAT2010";
+const char* ssid = "Ecosat";
+const char* password = "ECOSAT2021";
 const char* ipServer = "ecosat.com.mx";
 const char* puertoServer = "80";
 
