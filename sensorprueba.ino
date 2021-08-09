@@ -2,12 +2,12 @@
 #include "WiFi.h"
 
 const float Vcc = 3.3;
-int *estadoInputPin = {27,17};
-int *ledInputPin[I]nputPin = {26,16};
-int *sensorInputPin = {33, 34};
+int estadoInputPin[2] = {27,17};
+int ledInputPin[2] = {26,16};
+int sensorInputPin[2] = {33, 34};
 const float K = 2.5;
 float A = 2.229674985e-03, B = 1.211871252e-04, C = 8.713435086e-07;
-float *valuesSensors = {0,0};
+float valuesSensors[2] = {0,0};
 
 const int tiempoEnvioCompletado = 5000;
 const int tiempoSensorCompletado = 1000;
@@ -59,8 +59,8 @@ void inicializarWifi() {
 void inicializarSensores() {
   pinMode(estadoInputPin[0], INPUT);
   pinMode(estadoInputPin[1], INPUT);
-  pinMode(ledInputPin[I]nputPin[0], OUTPUT);
-  pinMode(ledInputPin[I]nputPin[1], OUTPUT);
+  pinMode(ledInputPin[0], OUTPUT);
+  pinMode(ledInputPin[1], OUTPUT);
 }
 
 
