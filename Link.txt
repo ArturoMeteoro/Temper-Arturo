@@ -1,0 +1,2 @@
+https://www.thinksrs.com/downloads/programs/therm%20calc/ntccalibrator/ntccalculator.html
+/*Steinhart-hart Thermistor Calculator*/
