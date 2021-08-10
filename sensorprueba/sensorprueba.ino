@@ -1,13 +1,18 @@
 #include <HTTPClient.h>
 #include "WiFi.h"
 
-const float Vcc = 3.3;
-int estadoInputPin[2] = {27,17};
-int ledInputPin[2] = {26,16};
-int sensorInputPin[2] = {33, 34};
-const float K = 2.5;
-float A = 2.229674985e-03, B = 1.211871252e-04, C = 8.713435086e-07;
-float valuesSensors[2] = {0,0};
+#define Rc 1000 //Resistance Value
+#define Vcc 3.3 //Voltage Common
+//Steinhart–Hart coefficients
+float A = 2.229674985e-3;
+float B = 1.211871252e-4;
+float C = 8.713435086e-7;
+const float K = 2.5; //Dissipation factor mW/C
+
+int estadoInputPin[] = {27,17};
+int ledInputPin[] = {26,16};
+int sensorInputPin[] = {33, 34};
+float valuesSensors[] = {0,0};
 
 const int tiempoEnvioCompletado = 5000;
 const int tiempoSensorCompletado = 1000;
@@ -21,8 +26,6 @@ const char* puertoServer = "80";
 int tiempoEnvio = 0;
 int tiempoSensor = 0;
 int tiempoDelay = 250;
-
-
 
 int estadoAnterior[] = {true, true};
 
@@ -80,12 +83,12 @@ void sensortermistor()
     float raw = analogRead(sensorInputPin[i]);
     float V = raw / 4095 * Vcc;
 
-    float R = (R1 * V) / (Vcc - V);
+    float R = (Rc * V) / (Vcc - V);
 
     float logR = log(R);
     float R_th = 1.0 / (A + B * logR + C * logR * logR * logR );
 
-    float kelvin = R_th - V*V/(K*R)*1000;
+    float kelvin = R_th - V*V/(K*R);
     valuesSensors[i] = kelvin - 273.15;
     
     Serial.print("Temperatura: ");
@@ -139,13 +142,13 @@ void sensorEstado(int sE, int l, String msg, int id) {
 
   if (estadoActual != estadoAnterior[id - 1]) {
     if (digitalRead(sE) == HIGH ) { //Cierra puerta
-      digitalWrite(l, LOW); //Enciende ledInputPin[
-]      Serial.println("APAGADO " + msg);
+      digitalWrite(l, LOW); //Enciende ledInputPin[i-1]
+      Serial.println("APAGADO " + msg);
       estadoAnterior[id - 1] = 1;
       SendRoomInfo(ipServer,puertoServer,id,"0","insert-sensor");
     } else { //Abre Puerta
-      digitalWrite(l, HIGH); //Apaga ledInputPin[
-]      Serial.println("ENCENDIDO " + msg);
+      digitalWrite(l, HIGH); //Apaga ledInputPin[i-1]
+      Serial.println("ENCENDIDO " + msg);
       estadoAnterior[id - 1] = 0;
       SendRoomInfo(ipServer,puertoServer,id,"1","insert-sensor");
     }
@@ -175,6 +178,7 @@ void loop() {
   }
   if (tiempoEnvio == tiempoEnvioCompletado) {
     tiempoEnvio = 0;
+    //TODO: FIX, SEND TEMPERATURE INFO
     SendRoomInfo(ipServer, puertoServer, 1, String(valuesSensors[0], 3), "update-temperature");
     SendRoomInfo(ipServer, puertoServer, 2, String(valuesSensors[1], 3), "update-temperature");
   } else {
