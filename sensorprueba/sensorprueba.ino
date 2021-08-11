@@ -9,11 +9,12 @@ float B = 1.211871252e-4;
 float C = 8.713435086e-7;
 const float K = 2.5; //Dissipation factor mW/C
 
+// Sensor Pins
 int estadoInputPin[] = {27, 17};
 int ledInputPin[] = {26, 16};
 int sensorInputPin[] = {33, 34};
-float valuesSensors[] = {0, 0};
 
+float sensorsValues[] = {0, 0};
 int estadoAnterior[] = {1, 1};
 
 const int tiempoEnvioCompletado = 5000;
@@ -79,6 +80,7 @@ void setup()
   inicializarSensores();
 }
 
+/*Get the Thermistor Values*/
 void sensortermistor()
 {
   for (int i = 0; i < 2; i++)
@@ -92,10 +94,10 @@ void sensortermistor()
     float R_th = 1.0 / (A + B * logR + C * logR * logR * logR);
 
     float kelvin = R_th - V * V / (K * R);
-    valuesSensors[i] = kelvin - 273.15;
+    sensorsValues[i] = kelvin - 273.15;
 
     Serial.print("Temperatura: ");
-    Serial.print(valuesSensors[i]);
+    Serial.print(sensorsValues[i]);
     Serial.println(" C");
   }
 }
@@ -202,8 +204,8 @@ void loop()
   {
     tiempoEnvio = 0;
     //TODO: FIX, SEND TEMPERATURE INFO
-    SendRoomInfo(ipServer, puertoServer, 1, String(valuesSensors[0], 3), "update-temperature");
-    SendRoomInfo(ipServer, puertoServer, 2, String(valuesSensors[1], 3), "update-temperature");
+    SendRoomInfo(ipServer, puertoServer, 1, String(sensorsValues[0], 3), "update-temperature");
+    SendRoomInfo(ipServer, puertoServer, 2, String(sensorsValues[1], 3), "update-temperature");
   }
   else
   {
