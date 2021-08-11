@@ -156,14 +156,14 @@ void sensorEstado(String msg)
         digitalWrite(ledInputPin[i], LOW); //Enciende ledInputPin[i]
         Serial.println("APAGADO " + msg);
         estadoAnterior[i] = 1;
-        SendRoomInfo(ipServer, puertoServer, id, "0", "insert-sensor");
+        SendRoomInfo(ipServer, puertoServer, i+1, "0", "insert-sensor");
       }
       else
       {                        //Abre Puerta
         digitalWrite(ledInputPin[i], HIGH); //Apaga ledInputPin[i]
         Serial.println("ENCENDIDO " + msg);
         estadoAnterior[i] = 0;
-        SendRoomInfo(ipServer, puertoServer, id, "1", "insert-sensor");
+        SendRoomInfo(ipServer, puertoServer, i+1, "1", "insert-sensor");
       }
     }
   }
