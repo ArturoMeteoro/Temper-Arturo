@@ -9,30 +9,31 @@ float B = 1.211871252e-4;
 float C = 8.713435086e-7;
 const float K = 2.5; //Dissipation factor mW/C
 
-int estadoInputPin[] = {27,17};
-int ledInputPin[] = {26,16};
+int estadoInputPin[] = {27, 17};
+int ledInputPin[] = {26, 16};
 int sensorInputPin[] = {33, 34};
-float valuesSensors[] = {0,0};
+float valuesSensors[] = {0, 0};
+
+int estadoAnterior[] = {1, 1};
 
 const int tiempoEnvioCompletado = 5000;
 const int tiempoSensorCompletado = 1000;
 
 /*CREDENTIALS*/
-const char* ssid = "Ecosat";
-const char* password = "ECOSAT2021";
-const char* ipServer = "ecosat.com.mx";
-const char* puertoServer = "80";
+const char *ssid = "Ecosat";
+const char *password = "ECOSAT2021";
+const char *ipServer = "ecosat.com.mx";
+const char *puertoServer = "80";
 
 int tiempoEnvio = 0;
 int tiempoSensor = 0;
 int tiempoDelay = 250;
 
-int estadoAnterior[] = {true, true};
-
 /**
    Funcion para inicializar wifi.
 */
-void inicializarWifi() {
+void inicializarWifi()
+{
   /**
     Parametros de wifi
   */
@@ -59,15 +60,16 @@ void inicializarWifi() {
   Serial.println(WiFi.macAddress());
 }
 
-void inicializarSensores() {
+void inicializarSensores()
+{
   pinMode(estadoInputPin[0], INPUT);
   pinMode(estadoInputPin[1], INPUT);
   pinMode(ledInputPin[0], OUTPUT);
   pinMode(ledInputPin[1], OUTPUT);
 }
 
-
-void setup() {
+void setup()
+{
   Serial.begin(115200);
 
   tiempoEnvio = 0;
@@ -79,24 +81,23 @@ void setup() {
 
 void sensortermistor()
 {
-  for(int i = 0; i < 2; i++){
+  for (int i = 0; i < 2; i++)
+  {
     float raw = analogRead(sensorInputPin[i]);
     float V = raw / 4095 * Vcc;
 
     float R = (Rc * V) / (Vcc - V);
 
     float logR = log(R);
-    float R_th = 1.0 / (A + B * logR + C * logR * logR * logR );
+    float R_th = 1.0 / (A + B * logR + C * logR * logR * logR);
 
-    float kelvin = R_th - V*V/(K*R);
+    float kelvin = R_th - V * V / (K * R);
     valuesSensors[i] = kelvin - 273.15;
-    
+
     Serial.print("Temperatura: ");
     Serial.print(valuesSensors[i]);
     Serial.println(" C");
-
   }
-
 }
 
 void SendRoomInfo(String ip, String puerto, int id, String data, String namefile)
@@ -107,19 +108,20 @@ void SendRoomInfo(String ip, String puerto, int id, String data, String namefile
 
   //http://ecosat.com.mx/aplicaciones/temperatura/insert-sensor.php?id=1&data=0
 
-
   bool httpResult = http.begin(dataline);
   if (!httpResult)
   {
     Serial.println("Error when sending to server: ");
     Serial.println(dataline);
-  } else {
+  }
+  else
+  {
     int httpCode = http.GET();
     if (httpCode > 0)
     { // Request has been made
       Serial.printf("HTTP status: %d Message: ", httpCode);
       String payload = http.getString();
-//      Serial.println(payload);
+      //      Serial.println(payload);
     }
     else
     { // Request could not be made
@@ -129,59 +131,82 @@ void SendRoomInfo(String ip, String puerto, int id, String data, String namefile
   http.end();
 }
 
-void sensorEstado(int sE, int l, String msg, int id) {
+void sensorEstado(String msg)
+{
   //    TRUE == HIGH
   //    FALSE == LOW
-  bool estadoActual=0;
+  bool estadoActual = 0;
+  for (int i = 0; i < 2; i++)
+  {
+    if (digitalRead(estadoInputPin[i]) == HIGH)
+    {
+      estadoActual = 1;
+    }
+    else
+    {
+      estadoActual = 0;
+    }
 
-  if (digitalRead(sE) == HIGH) {
-    estadoActual = 1;
-  } else {
-    estadoActual = 0;
-  }
-
-  if (estadoActual != estadoAnterior[id - 1]) {
-    if (digitalRead(sE) == HIGH ) { //Cierra puerta
-      digitalWrite(l, LOW); //Enciende ledInputPin[i-1]
-      Serial.println("APAGADO " + msg);
-      estadoAnterior[id - 1] = 1;
-      SendRoomInfo(ipServer,puertoServer,id,"0","insert-sensor");
-    } else { //Abre Puerta
-      digitalWrite(l, HIGH); //Apaga ledInputPin[i-1]
-      Serial.println("ENCENDIDO " + msg);
-      estadoAnterior[id - 1] = 0;
-      SendRoomInfo(ipServer,puertoServer,id,"1","insert-sensor");
+    if (estadoActual != estadoAnterior[i])
+    {
+      if (digitalRead(estadoInputPin[i]) == HIGH)
+      {                       //Cierra puerta
+        digitalWrite(ledInputPin[i], LOW); //Enciende ledInputPin[i]
+        Serial.println("APAGADO " + msg);
+        estadoAnterior[i] = 1;
+        SendRoomInfo(ipServer, puertoServer, id, "0", "insert-sensor");
+      }
+      else
+      {                        //Abre Puerta
+        digitalWrite(ledInputPin[i], HIGH); //Apaga ledInputPin[i]
+        Serial.println("ENCENDIDO " + msg);
+        estadoAnterior[i] = 0;
+        SendRoomInfo(ipServer, puertoServer, id, "1", "insert-sensor");
+      }
     }
   }
 }
 
-void loop() {
+void loop()
+{
   // Wait a few seconds between measurements.
-  sensorEstado(estadoInputPin[0], ledInputPin[0], " Principal", 1);
-  sensorEstado(estadoInputPin[1], ledInputPin[1], " Secundario", 2);
-  if (WiFi.status() == WL_CONNECTED) {
-    if (tiempoSensor == tiempoSensorCompletado) {
+  sensorEstado(" Principal");
+  sensorEstado(" Secundario");
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    if (tiempoSensor == tiempoSensorCompletado)
+    {
       tiempoSensor = 0;
       sensortermistor();
-    } else if (tiempoEnvio == tiempoEnvioCompletado) {
+    }
+    else if (tiempoEnvio == tiempoEnvioCompletado)
+    {
       //      Serial.println("Aun no se enviara la informacion por el tiempoTranscurridoSensor: " + String(tiempoSensor, DEC) + " del tiempo sensor completado: " + String(tiempoSensorCompletado, DEC));
     }
-  } else {
-    if (tiempoSensor == tiempoSensorCompletado) {
+  }
+  else
+  {
+    if (tiempoSensor == tiempoSensorCompletado)
+    {
       tiempoSensor = 0;
       sensortermistor();
-    } else {
+    }
+    else
+    {
       //      Serial.println("Aun no se enviara la informacion por el tiempoTranscurridoSensor: " + String(tiempoSensor, DEC) + " del tiempo sensor completado: " + String(tiempoSensorCompletado, DEC));
       //      Serial.println("Sin conexion a internet intentaremos hacer reconexion");
       sensortermistor();
     }
   }
-  if (tiempoEnvio == tiempoEnvioCompletado) {
+  if (tiempoEnvio == tiempoEnvioCompletado)
+  {
     tiempoEnvio = 0;
     //TODO: FIX, SEND TEMPERATURE INFO
     SendRoomInfo(ipServer, puertoServer, 1, String(valuesSensors[0], 3), "update-temperature");
     SendRoomInfo(ipServer, puertoServer, 2, String(valuesSensors[1], 3), "update-temperature");
-  } else {
+  }
+  else
+  {
     //    Serial.println("Aun no se enviara la informacion por el tiempoTranscurridoEnvio: " + String(tiempoEnvio, DEC) + " del tiempo a enviar: " + String(tiempoEnvioCompletado, DEC));
   }
   tiempoSensor = tiempoSensor + tiempoDelay;
